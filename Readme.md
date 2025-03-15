@@ -124,7 +124,7 @@ step 3: About Routes : <br><br>
 ## Important Note : <br> 
 ***generate google cloud console Api key*** <br>
 **generate SightEngine Api_user and Api-secrete**<br>
-***Make the an .env file in the same cloned repo and write in the env :***<br>
+***Make the an .env file in the same cloned directory and write in the env :***<br>
 API_USER = "<your_sight_engine_api_user>"<br>
 API_SECRET = "<your_sight_engine_api_secret>"<br>
 API_KEY = "<your_google_api_key>"<br>
