@@ -16,7 +16,7 @@ step 3: About Routes : <br><br>
     }<br><br>
 
 
-**Output format** : Return a json Response<br>
+**Output format** : returns a json Response<br>
 {<br>
   "Message": "Given url is not Safe to use",<br>
   "client": "vivek-patel-here",<br>
@@ -31,7 +31,7 @@ step 3: About Routes : <br><br>
 }<br><br>
 
 
-**Output format** : Return a json Response<br>
+**Output format** : returns a json Response<br>
 {<br>
   "message": " Image is safe.",<br>
   "success": true<br>
@@ -45,7 +45,7 @@ step 3: About Routes : <br><br>
 }<br>
 
 
-**Output format** : Return a json Response<br>
+**Output format** : returns a json Response<br>
 {<br>
   "message": "There is no evidence to support this claim and now studies are emerging to help disprove it.",<br>
   "success": true<br>
@@ -59,7 +59,7 @@ step 3: About Routes : <br><br>
 }<br>
 
 
-**Output format** : Return a json Response<br>
+**Output format** : returns a json Response<br>
 {<br>
   "message": " Self-harm and Suicidal content detected!",<br>
   "success": true<br>
@@ -74,7 +74,7 @@ step 3: About Routes : <br><br>
 }<br>
 
 
-**Output format** : Return a json Response<br>
+**Output format** : returns a json Response<br>
 {<br>
   "image_analysis": null,<br>
   "message": "Processing successful",<br>
@@ -93,7 +93,7 @@ step 3: About Routes : <br><br>
 }<br>
 
 
-**Output format** : Return a json Response<br>
+**Output format** : returns a json Response<br>
 {<br>
   "message": "Extremism and Terrorism content detected!",<br>
   "success": true<br>
@@ -107,7 +107,7 @@ step 3: About Routes : <br><br>
 }<br>
 
 
-**Output format** : Return a json Response<br>
+**Output format** : returns a json Response<br>
 {<br>
   "details": [<br>
     {<br>
