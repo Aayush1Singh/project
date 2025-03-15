@@ -121,6 +121,19 @@ step 3: About Routes : <br><br>
   "success": true<br>
 }<br>
 
+## Important Note : <br> 
+***generate google cloud console Api key*** <br>
+***generate SightEngine Api_user and Api-secrete**<br>
+***Make the an .env file in the same cloned repo and write in the env : ***<br>
+API_USER = "<your_sight_engine_api_user>"<br>
+API_SECRET = "<your_sight_engine_api_secret>"<br>
+API_KEY = "<your_google_api_key>"<br>
+<br>
+
+*After that go to google console cloud > API&Service>Library and activate following libraries:*<br>
+1. safeBrowsing Api<br>
+2. Fact Check Tools API
+
 ### **********************End Here*******************
 
 
