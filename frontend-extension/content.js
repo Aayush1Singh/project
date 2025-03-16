@@ -90,8 +90,8 @@ async function analyzeContent() {
 }
 
 function extractPageContent() {
-  return Array.from(document.querySelectorAll("p, div, h1, h2, h3")).map(
-    (el, index) => {
+  return Array.from(document.querySelectorAll("p, div, h1, h2, h3"))
+    .map((el, index) => {
       if (el.innerText.length < 3) return;
       el.setAttribute("data-content-id", `content-${index}`);
       return {
@@ -99,8 +99,11 @@ function extractPageContent() {
         text: el.innerText,
         tag: el.tagName.toLowerCase(),
       };
-    }
-  );
+    })
+    .filter((e) => {
+      if (e) return true;
+      else return false;
+    });
 }
 
 function highlightHarmfulContent(harmfulSections) {
