@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Harmful Content Detector</title>
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <image src="./sidebar_logo.svg" />
+    <h3>Content Purifier</h3>
+    <h2>We're helping keep you safe online</h2>
+    <p>Here's what we've done so far:</p>
+
+    <ul class="stats">
+      <li>
+        <strong id="pages-scanned">0</strong>
+        <span>pages scanned</span>
+      </li>
+      <li>
+        <strong id="unsafe-blocked">0</strong>
+        <span>unsafe items blocked</span>
+      </li>
+      <li>
+        <strong id="dangerous-blocked">0</strong>
+        <span>dangerous pages blocked</span>
+      </li>
+      <li>
+        <span>Most Common Keywords:</span>
+        <ul id="commonKeywords" class="keyword-list"></ul>
+      </li>
+      <li>
+        <span>Recent Harmful Sites:</span>
+        <ul id="recentHarmfulSites" class="site-list"></ul>
+      </li>
+    </ul>
+
+    <div class="toggle-container">
+      <span>Enable Detection</span>
+      <label class="switch">
+        <input type="checkbox" id="toggleDetection" />
+        <span class="slider round"></span>
+      </label>
+    </div>
+    <button id="clearCache" class="trendy-button">Clear Cache</button>
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -3,14 +3,14 @@ import requests
 app = Flask(__name__)
 import os
 from dotenv import load_dotenv
-
+from flask_cors import CORS  # Import CORS module
+CORS(app) 
 # Load environment variables from .env file
 load_dotenv()
 API_USER=os.getenv("API_USER")
 API_SECRET=os.getenv("API_SECRET")
 API_KEY=os.getenv("API_KEY")
 #********************Route for scam and Phishing website detection********************
-
 @app.route("/Scamphishing", methods=['POST'])
 def handleScams():
     try:
@@ -275,7 +275,42 @@ def handlePrivacyThreatAndDoxing():
                 return {"success": True, "message": "✅ No doxing threats found."}
     except Exception as e :
         return jsonify({"success": False, "message": f"Internal Server Error: {str(e)}"}), 500
+
+
+def handlePrivacyViolation(data):
+    return 1
+@app.route('/analyze-content', methods=['POST'])
+def analyze_content():
+    try:
+        data = request.get_json()
+        # print(data)
+        if not data:
+            return jsonify({"success": False, "message": "No data received"}), 400
         
+        content_type = data.get("type")  # 'url', 'image', 'text'
+        content = data.get("content")
+        print('hello',content)
+        if not content_type or not content:
+            return jsonify({"success": False, "message": "Invalid data format"}), 400
+
+        # Route data to appropriate endpoints
+        if content_type == "url":
+            # Forward URL for scam/phishing detection
+            response = requests.post("http://localhost:5000/Scamphishing", json={"url": content})
+        elif content_type == "image":
+            # Forward image for violent/self-harm detection
+            response = requests.post("http://localhost:5000/violentcontent", json={"image-url": content})
+        elif content_type == "text":
+            # Forward text for fake news/hate speech detection
+            response = requests.post("http://localhost:5000/hatespeech-cyberbullying", json={"txt-content": content})
+        else:
+            return jsonify({"success": False, "message": "Unsupported content type"}), 400
         
+        # Return the result of the forwarded request
+        return response.json(), response.status_code
+
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Internal Server Error: {str(e)}"}), 500
+           
 if __name__ == "__main__":
     app.run(debug=True)

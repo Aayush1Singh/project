@@ -1,0 +1,240 @@
+.stats {
+  list-style: none;
+  padding: 0;
+  margin: 50px;
+  border: 1px solid red;
+  border-radius: 10px;
+  padding: 4px 10px;
+  width: 200px;
+}
+
+.stats li {
+  display: flex;
+  align-items: center;
+  margin: 0.5rem 0;
+  border-bottom: 1px solid red;
+}
+.stats li:last-child {
+  border-bottom: 0px;
+}
+.stats li strong {
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
+}
+.toggle-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding: 8px 0;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  border-radius: 34px;
+  transition: background-color 0.3s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+input:checked + .slider {
+  background-color: #4caf50; /* Green when enabled */
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px); /* Slide to the right */
+}
+.trendy-button {
+  background: linear-gradient(135deg, #4caf50, #00c853); /* Gradient Green */
+  color: #fff; /* White text */
+  border: none;
+  border-radius: 30px; /* Rounded corners */
+  padding: 12px 24px; /* Spacious padding */
+  font-size: 16px; /* Modern font size */
+  font-weight: bold; /* Bold text for emphasis */
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer; /* Pointer cursor for clarity */
+  box-shadow: 0 4px 15px rgba(0, 200, 83, 0.4); /* Glowing effect */
+  transition: all 0.3s ease; /* Smooth animations */
+}
+
+.trendy-button:hover {
+  background: linear-gradient(135deg, #00c853, #4caf50); /* Reverse gradient */
+  box-shadow: 0 6px 20px rgba(0, 200, 83, 0.6); /* Enhanced glow on hover */
+  transform: translateY(-2px); /* Slight lift */
+}
+
+.trendy-button:active {
+  transform: scale(0.98); /* Subtle press effect */
+}
+body {
+  font-family: "Arial", sans-serif;
+  background-color: #f5f7fa; /* Soft background */
+  color: #333;
+  padding: 20px;
+  width: 320px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Soft shadow */
+  border-radius: 12px;
+}
+
+h3 {
+  color: #4caf50;
+  font-weight: 700;
+  text-align: center;
+}
+
+h2 {
+  font-size: 18px;
+  color: #333;
+  margin-top: 8px;
+  text-align: center;
+}
+
+p {
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+}
+
+.stats {
+  list-style: none;
+  padding: 0;
+  background-color: #ffffff;
+  border: 2px solid #4caf50;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+}
+
+.stats li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.stats li:last-child {
+  border-bottom: none;
+}
+
+strong {
+  color: #4caf50;
+}
+
+.toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 20px;
+}
+
+input:checked + .slider {
+  background-color: #4caf50;
+}
+
+.slider::before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider::before {
+  transform: translateX(20px);
+}
+
+.trendy-button {
+  background: linear-gradient(135deg, #4caf50, #00c853);
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  width: 100%;
+  box-shadow: 0 4px 15px rgba(0, 200, 83, 0.4);
+  transition: all 0.3s ease;
+  margin-top: 12px;
+}
+
+.trendy-button:hover {
+  background: linear-gradient(135deg, #00c853, #4caf50);
+  box-shadow: 0 6px 20px rgba(0, 200, 83, 0.6);
+  transform: translateY(-2px);
+}
+
+.trendy-button:active {
+  transform: scale(0.98);
+}
+
+.keyword-list,
+.site-list {
+  list-style-type: none;
+  padding-left: 0;
+  margin-top: 5px;
+  color: #666;
+  font-style: italic;
+}
