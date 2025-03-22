@@ -16,7 +16,7 @@ API_USER=os.getenv("API_USER")
 API_SECRET=os.getenv("API_SECRET")
 API_KEY=os.getenv("API_KEY")
 GOOGLE_KEY=os.getenv('GEMINI_API_KEY')
-#********************Route for scam and Phishing website detection********************
+
 #***********************Route for Explicit and voilent Conetent Detection***********************
 
 @app.route("/violentcontent",methods=['POST'])
