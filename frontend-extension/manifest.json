@@ -16,6 +16,7 @@
   ],
   "host_permissions": ["*://*/"],
   "action": {
+    "default_icon": "./extension_image.png",
     "default_popup": "popup.html"
   }
 }
