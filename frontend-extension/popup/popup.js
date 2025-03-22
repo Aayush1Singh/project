@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         chrome.scripting.executeScript({
           target: { tabId: tabs[0].id },
-          files: ["content.js"], // Only inject content script when enabled
+          files: ["./content/content.js"], // Only inject content script when enabled
         });
       });
     }
