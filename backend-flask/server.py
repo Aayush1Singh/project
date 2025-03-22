@@ -8,7 +8,6 @@ from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_google_genai import GoogleGenerativeAI
 import re
-
 CORS(app) 
 # Load environment variables from .env file
 load_dotenv()
@@ -30,9 +29,9 @@ def extract_segments(text):
     
     return content_map
 async def handlePrivacyViolation(text2):
-    x=extract_segments(text2)
-    for key in x:
-        print(f"{key}: {x[key]}")    
+    # x=extract_segments(text2)
+    # for key in x:
+        # print(f"{key}: {x[key]}")    
     try:
         llm = GoogleGenerativeAI(model="gemini-1.5-pro", google_api_key=GOOGLE_KEY, temperature=0.5)
     except Exception as e:
@@ -74,6 +73,7 @@ Now analyze the following text:
 @app.route('/analyze-content', methods=['POST'])
 async def analyze_content():
     try:
+        print('hello')
         data = request.get_json()
         # print(data)
         if not data:
@@ -84,7 +84,7 @@ async def analyze_content():
         text=data.get('text')
         # print('hello',text)
         output=await handlePrivacyViolation(text)
-        print(output)
+        # print(output)
         return jsonify({'success':True, "output":output});
         if not content_type or not content:
             return jsonify({"success": False, "message": "Invalid data format"}), 400
