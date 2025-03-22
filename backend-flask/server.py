@@ -17,37 +17,6 @@ API_SECRET=os.getenv("API_SECRET")
 API_KEY=os.getenv("API_KEY")
 GOOGLE_KEY=os.getenv('GEMINI_API_KEY')
 #********************Route for scam and Phishing website detection********************
-@app.route("/Scamphishing", methods=['POST'])
-def handleScams():
-    try:
-        if request.method == 'POST':
-            data = request.get_json()
-            url_to_check = data.get("url") 
-            
-            if not url_to_check:
-                return jsonify({"error": "No URL provided"}), 400  
-            
-            payload = {
-                "client": { "clientId": data.get("clientId"), "clientVersion": data.get("client") },
-                "threatInfo": {
-                    "threatTypes": ["MALWARE", "SOCIAL_ENGINEERING"],
-                    "platformTypes": ["ANY_PLATFORM"],
-                    "threatEntryTypes": ["URL"],
-                    "threatEntries": [{ "url": url_to_check }]
-                }
-            }
-
-            response = requests.post(
-                f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={API_KEY}",
-                json=payload
-            )
-            if len(response.json())==0:                 # return api response
-                return jsonify({"success":True,"client":data.get("client"),"Message" : "Given url is Safe to use"}),200  
-            else:
-                return jsonify({"success":True,"client":data.get("client"),"Message" : "Given url is not Safe to use"}),403
-    except Exception as e:
-        return jsonify({"success": False, "message": f"Internal Server Error: {str(e)}"}), 500
-    
 #***********************Route for Explicit and voilent Conetent Detection***********************
 
 @app.route("/violentcontent",methods=['POST'])
@@ -377,6 +346,66 @@ async def analyze_content():
 
     except Exception as e:
         return jsonify({"success": False, "message": f"Internal Server Error: {str(e)}"}), 500
-           
+
+#********************Route for scam and Phishing website detection********************
+
+@app.route("/scamphishing", methods=['POST'])
+def handleScams():
+    try:
+        if request.method == 'POST':
+            data = request.get_json()
+            urls = data.get("urls") 
+            
+            if not len(urls):
+                return jsonify({"error": "No URL provided"}), 400  
+            
+            payloadUrls = [] # It will be sent along with payload while hitting google safe browsing end point.
+            for url in urls :
+                newUrl={"url":url.get("url")}
+                payloadUrls.append(newUrl)
+            
+            #payload for google safe Browsing
+            payload = {
+                "client": { "clientId":"Hack2Skill" , "clientVersion": "Team Sparkz" },
+                "threatInfo": {
+                    "threatTypes": ["MALWARE", "SOCIAL_ENGINEERING"],
+                    "platformTypes": ["ANY_PLATFORM"],
+                    "threatEntryTypes": ["URL"],
+                    "threatEntries": payloadUrls       # <-- payloadUrls used here!
+                }
+            }
+            
+            # making api call 
+            response = requests.post(
+                f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={API_KEY}",
+                json=payload
+            )
+            
+            data = response.json()
+            
+            # Return the response if site does not contain any malicious url
+            if not len(data):
+                return jsonify({"success":True,"message":"No malicious url detected on this webpage! ","ids": []}),200 
+            
+            #Extracting all the malicious websites!
+            maliciousUrls=[]
+            for i in data.get("matches"):
+                maliciousUrls.append(i.get("threat").get("url"))
+            
+            #Return ids of all the malicious url found by google Safe browsing
+            malicious_Url_Ids=[]
+            for x in urls:
+                for u in maliciousUrls:
+                    if u == x.get("url"):
+                        malicious_Url_Ids.append(x.get("index"))
+                        break
+                
+            return jsonify({"success":True,"message":"Several malicious urls detected on this webpage! ","ids": malicious_Url_Ids}),401
+
+                
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Internal Server Error: {str(e)}"}), 500
+
+       
 if __name__ == "__main__":
     app.run(debug=True)

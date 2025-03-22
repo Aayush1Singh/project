@@ -229,7 +229,20 @@ input:checked + .slider::before {
 .trendy-button:active {
   transform: scale(0.98);
 }
-
+.malicious-link {
+  background-color: red; /* Red color for alert */
+}
+.malicious-link::after {
+  content: " "; /* Empty content for visual marker */
+  display: inline-block;
+  width: 8px; /* Circle size */
+  height: 8px;
+  background-color: red; /* Red color for alert */
+  border-radius: 50%; /* Makes it a circle */
+  margin-left: 6px; /* Adds spacing from link text */
+  vertical-align: middle; /* Aligns the circle with text */
+  box-shadow: 0 0 5px rgba(255, 0, 0, 0.8); /* Glowing effect */
+}
 .keyword-list,
 .site-list {
   list-style-type: none;
