@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Harmful Content Detector",
+  "name": "NeuroWeb",
   "version": "1.0",
   "description": "Detects and highlights harmful content on web pages.",
-  "permissions": ["activeTab", "scripting", "storage", "http://127.0.0.1:5000"],
+  "permissions": ["activeTab", "scripting", "storage"],
   "background": {
     "service_worker": "background.js",
     "type": "module"

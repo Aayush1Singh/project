@@ -15,14 +15,13 @@ window.addEventListener("load", async () => {
     console.log(err);
   }
 });
-const API_URL = "https://random-server-b310.onrender.com";
+const API_URL = "http://127.0.0.1:5000";
 /**
- * 
- * 
- * 
- *https://random-server-b310.onrender.com 
-*/
-
+ *
+ *
+ *
+https://random-server-b310.onrender.com
+ */
 // Detect harmful content only if detection is enabled
 // chrome.storage.local.get("detectionEnabled", (result) => {
 //   if (result.detectionEnabled) {

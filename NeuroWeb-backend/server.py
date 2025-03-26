@@ -30,38 +30,35 @@ def extract_segments(text):
         content_map[marker] = content
     
     return content_map
-semaphore = asyncio.Semaphore(3)
+semaphore = asyncio.Semaphore(1)
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 async def handlePrivacyViolation(text2):
     try:
-        llm = GoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=GOOGLE_KEY, temperature=0.5)
+        llm = GoogleGenerativeAI(model="gemini-1.5-pro", google_api_key=GOOGLE_KEY, temperature=1)
     except Exception as e:
         print(f"Error during LLM initialization: {e}")
         return  # Stop execution if LLM fails to initialize
     prompt = """
-    Below is a continuous text where each content section ends with a unique identifier in the format #FP~x.
-    Analyze the text and identify harmful content by category. For each harmful content found, return its corresponding identifier along with the identified category.
+Below is a continuous text where each content section ends with a unique identifier in the format #FP~x.
+Analyze the text and identify harmful content by category. For each harmful content found, return its corresponding identifier along with the identified category.
 
-    ### Harmful Content Categories:
-    1. Hate Speech & Cyberbullying – Offensive, racist, sexist, or threatening content.
-    2. Misinformation & Fake News – Spread of false or misleading information.
-    3. Online Scams & Fraud – Phishing, financial fraud, and identity theft.
-    4. Explicit & Violent Content – Graphic violence, child exploitation, and revenge porn.
-    5. Self-Harm & Suicide Encouragement – Content promoting self-harm or mental distress.
-    6. Extremism & Terrorism Recruitment – Radicalization and terrorist propaganda.
-    7. Privacy Violations & Doxing – Unauthorized data leaks, surveillance, and personal info exposure.
+Harmful Content Categories:
+1. Hate Speech & Cyberbullying Offensive, racist, sexist, or threatening content.
+2. Misinformation & Fake News Spread of false or misleading information.
+3. Online Scams & Fraud Phishing, financial fraud, and identity theft.
+4. Explicit & Violent Content Graphic violence, child exploitation, and revenge porn.
+5. Self-Harm & Suicide Encouragement Content promoting self-harm or mental distress.
+6. Extremism & Terrorism Recruitment Radicalization and terrorist propaganda.
+7. Privacy Violations & Doxing Unauthorized data leaks, surveillance, and personal info exposure.
 
-    ### Example Input:
-    I love LLM #FP~1. This is inappropriate content that promotes violence #FP~2. This is another content that promotes bullying #FP3
-
-    ### Example Output:
-    FP~2,FP~3
-    **Do not include category names, descriptions, or explanations. Only output the identifiers.**
-    Do not add anything else
-    Now analyze the following text:
-    {text}
-    """
+Example Input: I love LLM #FP~1. This is inappropriate content that promotes violence #FP~2. This is another content that promotes bullying #FP3
+Example Output: "FP~2,FP~3"
+**Do not include category names, descriptions, or explanations. Only output the identifiers.**
+Do not add anything else
+Now analyze the following text:
+{text}
+"""
 
     prompt_template = PromptTemplate(input_variables=['text'], template=prompt)
     chain = LLMChain(llm=llm, prompt=prompt_template)
