@@ -69,47 +69,21 @@ async def handlePrivacyViolation(text2):
         # Run the chain 
         try: 
             result =await chain.ainvoke({'text': text2})
-            print('hello boi 10')
             print("Identified Harmful IDs:", result)
             return result['text'] if 'text' in result else None  # Return result safely
         except Exception as ex:
             print(f"Error during chain invocation: {ex}")
             return ""
-
+#*********************Route for text moderation using gemini*********************************
 @app.route('/analyze-content', methods=['POST'])
 async def analyze_content():
     try:
-        print('hello')
         data = request.get_json()
-        # print(data)
         if not data:
             return jsonify({"success": False, "message": "No data received"}), 400
-        
-        content_type = data.get("type")  # 'url', 'image', 'text'
-        content = data.get("content")
         text=data.get('text')
-        # print('hello',text)
         output=await handlePrivacyViolation(text)
-        # print(output)
-        return jsonify({'success':True, "output":output});
-        if not content_type or not content:
-            return jsonify({"success": False, "message": "Invalid data format"}), 400
-
-        # Route data to appropriate endpoints
-        if content_type == "url":
-            # Forward URL for scam/phishing detection
-            response = requests.post("http://localhost:5000/Scamphishing", json={"url": content})
-        elif content_type == "image":
-            # Forward image for violent/self-harm detection
-            response = requests.post("http://localhost:5000/violentcontent", json={"image-url": content})
-        elif content_type == "text":
-            # Forward text for fake news/hate speech detection
-            response = requests.post("http://localhost:5000/hatespeech-cyberbullying", json={"txt-content": content})
-        else:
-            return jsonify({"success": False, "message": "Unsupported content type"}), 400
-        
-        # Return the result of the forwarded request
-        return response.json(), response.status_code
+        return jsonify({'success':True, "output":output})
 
     except Exception as e:
         return jsonify({"success": False, "message": f"Internal Server Error: {str(e)}"}), 500
@@ -175,4 +149,4 @@ def handleScams():
 
        
 if __name__ == "__main__":
-    app.run(debug=True,threaded=False)
+    app.run(host="0.0.0.0",threaded=False)
