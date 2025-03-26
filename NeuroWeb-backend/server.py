@@ -17,6 +17,56 @@ API_USER=os.getenv("API_USER")
 API_SECRET=os.getenv("API_SECRET")
 API_KEY=os.getenv("API_KEY")
 GOOGLE_KEY=os.getenv('GEMINI_API_KEY')
+GEMINI_LIST=eval(os.getenv('GEMINI_KEY_LIST'))
+prompt = """Analyze the following text to detect harmful content. Each content section ends with a unique identifier in the format "#FP~x".
+
+### Task:
+1. Identify harmful content based on the predefined categories below.
+2. Return only the **identifiers (FP~x)** of the sections containing harmful content, separated by commas.
+3. If no harmful content is found, return an empty string ("").
+
+### Harmful Content Categories:
+1. **Hate Speech & Cyberbullying** Content that includes racist, sexist, homophobic, religiously offensive, or derogatory remarks targeting individuals or groups. This covers threats, insults, bullying, harassment, and personal attacks intended to cause harm or incite hatred.
+2. **Misinformation & Fake News** False, misleading, or manipulated information presented as factual. This includes fabricated stories, conspiracy theories, medical misinformation (e.g., fake cures), or political propaganda intended to deceive.
+3. **Online Scams & Fraud** Attempts to deceive users for financial gain or steal personal data. This includes phishing scams, Ponzi schemes, fraudulent investment offers, impersonation fraud, fake job offers, and identity theft attempts.
+4. **Explicit & Violent Content** Graphic material depicting severe violence, gore, mutilation, torture, child abuse, revenge porn, sexual exploitation, or depictions of self-harm. This category covers highly disturbing or traumatizing content.
+5. **Self-Harm & Suicide Encouragement** Content that promotes, encourages, or glorifies self-harm, suicide, eating disorders, or mental distress. This includes suggestions or methods for self-harm, suicide pacts, or content that shames individuals into self-harm.
+6. **Extremism & Terrorism Recruitment** Content that promotes radical ideologies, terrorist propaganda, violent extremism, or recruitment for extremist groups. This includes calls for violence, justifications of terrorist acts, or materials that aim to radicalize.
+7. **Privacy Violations & Doxing** Unauthorized sharing of private information, such as full names, addresses, phone numbers, bank details, or personal conversations. This includes doxing (publicly exposing personal details), leaked sensitive data, or encouraging surveillance without consent.
+
+### Output Rules:
+- **Only return the identifiers (FP~x)**, separated by commas (e.g., "FP~2,FP~3").
+- Do not include category names, explanations, or any extra text.
+- The output must be a single-line string.
+
+### Example:
+#### Input:
+"I love LLM #FP~1. This promotes violence #FP~2. This encourages bullying #FP~3"
+#### Output:
+"FP~2,FP~3"
+
+### Now analyze the following text:
+{text}
+"""
+
+llmList=[];
+prompt_template = PromptTemplate(input_variables=['text'], template=prompt)
+
+for i in GEMINI_LIST:
+    try:
+        temp = GoogleGenerativeAI(model="gemini-1.5-pro", google_api_key=i, temperature=1)
+        chain = LLMChain(llm=temp, prompt=prompt_template)
+        llmList.append(chain)
+    except Exception as e:
+        print(f"Error during LLM initialization: {e}")
+counter=0
+counter_lock = asyncio.Lock()  # Lock for counter updates
+async def increaseCounter():
+    global counter 
+    async with counter_lock:  # Ensure only one update at a time
+        counter=counter+1;
+        counter %=len(GEMINI_LIST)
+semaphore = asyncio.Semaphore(len(GEMINI_LIST))
 
 def extract_segments(text):
     # Regex to split content while keeping markers
@@ -30,42 +80,13 @@ def extract_segments(text):
         content_map[marker] = content
     
     return content_map
-semaphore = asyncio.Semaphore(1)
-
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 async def handlePrivacyViolation(text2):
-    try:
-        llm = GoogleGenerativeAI(model="gemini-1.5-pro", google_api_key=GOOGLE_KEY, temperature=1)
-    except Exception as e:
-        print(f"Error during LLM initialization: {e}")
-        return  # Stop execution if LLM fails to initialize
-    prompt = """
-Below is a continuous text where each content section ends with a unique identifier in the format #FP~x.
-Analyze the text and identify harmful content by category. For each harmful content found, return its corresponding identifier along with the identified category.
-
-Harmful Content Categories:
-1. Hate Speech & Cyberbullying Offensive, racist, sexist, or threatening content.
-2. Misinformation & Fake News Spread of false or misleading information.
-3. Online Scams & Fraud Phishing, financial fraud, and identity theft.
-4. Explicit & Violent Content Graphic violence, child exploitation, and revenge porn.
-5. Self-Harm & Suicide Encouragement Content promoting self-harm or mental distress.
-6. Extremism & Terrorism Recruitment Radicalization and terrorist propaganda.
-7. Privacy Violations & Doxing Unauthorized data leaks, surveillance, and personal info exposure.
-
-Example Input: I love LLM #FP~1. This is inappropriate content that promotes violence #FP~2. This is another content that promotes bullying #FP3
-Example Output: "FP~2,FP~3"
-**Do not include category names, descriptions, or explanations. Only output the identifiers.**
-Do not add anything else
-Now analyze the following text:
-{text}
-"""
-
-    prompt_template = PromptTemplate(input_variables=['text'], template=prompt)
-    chain = LLMChain(llm=llm, prompt=prompt_template)
     async with semaphore:   
         # Run the chain 
         try: 
-            result =await chain.ainvoke({'text': text2})
+            await increaseCounter()
+            result =await llmList[counter].ainvoke({'text': text2})
             print("Identified Harmful IDs:", result)
             return result['text'] if 'text' in result else None  # Return result safely
         except Exception as ex:
