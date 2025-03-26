@@ -5,7 +5,7 @@
 ### Step 1: Clone the Repository
 Clone this repository to your local machine:
 ```sh
-git clone https://github.com/yourusername/hack2Skill-server.git
+git clone https://github.com/Aayush1Singh/hack2Skill-server.git
 cd hack2Skill-server/frontend-extension
 ```
 ### Step 2: Open Chrome Extensions Page
