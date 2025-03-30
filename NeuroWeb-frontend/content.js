@@ -15,9 +15,9 @@ window.addEventListener("load", async () => {
     console.log(err);
   }
 });
-const API_URL = "http://127.0.0.1:5000";
+const API_URL = "https://random-server-b310.onrender.com";
 /**
- *
+ *http://127.0.0.1:500
  *
  *
 https://random-server-b310.onrender.com
