@@ -11,13 +11,16 @@ from flask import Flask, jsonify, request
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 import os
+from flask_cors import CORS
+import asyncio
+import aiohttp
 
 app = Flask(__name__)
+CORS(app)
 load_dotenv()
-
+api_keys=[['1861897728','dVZMNttNhrjSrCGVTSdFfGAA3Kw8N9LB'],["421618219","6evSU9RSa8jCKNCBgVFpxaLy7g2gkCke"],['720767819','CcNxxJdRSimKuQ4RwZsNiDnMxKHWmxJr'],['1157867926','bZDXeHTEdMBfAfeaP5i4xijfHFPCyM9y']]
 # ✅ NSFW Classifier using Transformers
 classifier = pipeline("image-classification", model="Falconsai/nsfw_image_detection", use_fast=True)
-
 # ✅ Load MobileNetV2 Model
 model = models.mobilenet_v2(pretrained=True)
 model.eval()
@@ -91,54 +94,128 @@ def batch_nsfw_prediction(image_sources, bad_indices):
     return nsfw_candidates
 
 # ✅ Final filtering via Sightengine
-async def send_to_api_async(nsfw_candidates, bad_indices):
-    final_nsfw = []
-    api_user = os.getenv("SIGHTENGINE_USER", "421618219")
-    api_secret = os.getenv("SIGHTENGINE_SECRET", "6evSU9RSa8jCKNCBgVFpxaLy7g2gkCke")
+counter = 0
+counter_lock = asyncio.Lock()
 
-    for item in nsfw_candidates:
+async def increaseCounter(api_keys):
+    """Round-robin counter to rotate API keys"""
+    global counter
+    async with counter_lock:
+        counter = (counter + 1) % len(api_keys)
+
+semaphore = asyncio.Semaphore(5)  # Limit concurrency based on system capacity
+
+async def fetch_image_async(url):
+    """Fetch image asynchronously"""
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                return Image.open(BytesIO(await response.read()))
+            return None
+
+async def process_image(session, item, bad_indices, api_keys):
+    """Process a single image asynchronously using an available API key"""
+    async with semaphore:
+        await increaseCounter(api_keys)  # Rotate API key
+        api_user, api_secret = api_keys[counter]
+
         try:
-            image = fetch_image_from_url(item["url"])
+            image = await fetch_image_async(item["url"])
             if image is None:
                 bad_indices.append(item["index"])
-                continue
+                return None
 
             buffer = BytesIO()
             image.save(buffer, format="PNG")
             buffer.seek(0)
 
             params = {
-                'models': 'nudity-2.1,weapon,text-content,gore-2.0',
+                'models': 'nudity-2.1,weapon,gore-2.0',
                 'api_user': api_user,
                 'api_secret': api_secret
             }
             files = {'media': ('image.png', buffer)}
-            r = requests.post('https://api.sightengine.com/1.0/check.json', files=files, data=params)
-            output = r.json()
+
+            async with session.post('https://api.sightengine.com/1.0/check.json', data=params, files=files) as response:
+                output = await response.json()
+
+            if output.get("status") != "success":
+                print(f"❌ API error for image {item['index']}: {output.get('error', {}).get('message')}")
+                bad_indices.append(item["index"])
+                return None
 
             suggestive_score = output['nudity'].get('suggestive', 0)
             very_suggestive_score = output['nudity'].get('very_suggestive', 0)
             print(f"Image {item['index']} → Suggestive: {suggestive_score}, Very Suggestive: {very_suggestive_score}")
 
-            if suggestive_score > 0.5 or very_suggestive_score > 0.5:
-                final_nsfw.append(item["index"])
+            return item["index"] if suggestive_score > 0.5 or very_suggestive_score > 0.5 else None
 
         except Exception as e:
-            print(f"❌ Error in Sightengine API for image {item['index']}: {e}")
+            print(f"❌ Error processing image {item['index']}: {e}")
             bad_indices.append(item["index"])
+            return None
 
-    return final_nsfw
 
-# ✅ Flask Route
-@app.route("/verify-images", methods=['POST'])
+# async def send_to_api_async(nsfw_candidates, bad_indices):
+#     final_nsfw = []
+#     api_user = os.getenv("SIGHTENGINE_USER", "421618219")
+#     api_secret = os.getenv("SIGHTENGINE_SECRET", "6evSU9RSa8jCKNCBgVFpxaLy7g2gkCke")
+
+#     for item in nsfw_candidates:
+#         try:
+#             image = fetch_image_from_url(item["url"])
+#             if image is None:
+#                 bad_indices.append(item["index"])
+#                 continue
+
+#             buffer = BytesIO()
+#             image.save(buffer, format="PNG")
+#             buffer.seek(0)
+
+#             params = {
+#                 'models': 'nudity-2.1,weapon,text-content,gore-2.0',
+#                 'api_user': api_user,
+#                 'api_secret': api_secret
+#             }
+#             files = {'media': ('image.png', buffer)}
+#             r = requests.post('https://api.sightengine.com/1.0/check.json', files=files, data=params)
+#             output = r.json()
+#             if output.get("status") != "success":
+#                 print(f"❌ API error for image {item['index']}: {output.get('error', {}).get('message')}")
+#                 bad_indices.append(item["index"])
+#                 continue
+#             suggestive_score = output['nudity'].get('suggestive', 0)
+#             very_suggestive_score = output['nudity'].get('very_suggestive', 0)
+#             print(f"Image {item['index']} → Suggestive: {suggestive_score}, Very Suggestive: {very_suggestive_score}")
+
+#             if suggestive_score > 0.5 or very_suggestive_score > 0.5:
+#                 final_nsfw.append(item["index"])
+
+#         except Exception as e:
+#             print(f"❌ Error in Sightengine API for image {item['index']}: {e}")
+#             bad_indices.append(item["index"])
+
+#     return final_nsfw
+
+async def send_to_api_async(nsfw_candidates, bad_indices, api_keys):
+    """Process multiple images concurrently using SightEngine API"""
+    async with aiohttp.ClientSession() as session:
+        tasks = [process_image(session, item, bad_indices, api_keys) for item in nsfw_candidates]
+        results = await asyncio.gather(*tasks)
+
+    return [index for index in results if index is not None]  # Filter out None results# ✅ Flask Route
+@app.route("/analyze-images", methods=['POST'])
 def verify_images():
+    print('hellllo')
     data = request.json
+    data=data['images']
+    print(data)
     if not data or not isinstance(data, list):
         return jsonify({"error": "Invalid input format"}), 400
 
     bad_indices = []
     nsfw_candidates = batch_nsfw_prediction(data, bad_indices)
-    final_nsfw = asyncio.run(send_to_api_async(nsfw_candidates, bad_indices))
+    final_nsfw = asyncio.run(send_to_api_async(nsfw_candidates, bad_indices,api_keys))
 
     return jsonify({
         "nsfw_indices": final_nsfw,
@@ -146,4 +223,5 @@ def verify_images():
     })
 
 if __name__ == "__main__":
+    print('SERVER STARTED')
     app.run(host="0.0.0.0", debug=True)
