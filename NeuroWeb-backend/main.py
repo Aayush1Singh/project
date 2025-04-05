@@ -85,7 +85,7 @@ def batch_nsfw_prediction(image_sources, bad_indices):
             nsfw_score = response[0]["score"] if response else 0
             print(f"Image {index} -> NSFW Score: {nsfw_score}")
 
-            if nsfw_score > 0.5:
+            if nsfw_score > 0.98:
                 nsfw_candidates.append({"url": img["url"], "index": index})
         except Exception as e:
             print(f"❌ NSFW classifier failed for {img['url']}: {e}")
@@ -125,18 +125,19 @@ async def process_image(session, item, bad_indices, api_keys):
                 bad_indices.append(item["index"])
                 return None
 
+            # Create a FormData object for the multipart upload
+            form_data = aiohttp.FormData()
+            form_data.add_field('api_user', api_user)
+            form_data.add_field('api_secret', api_secret)
+            form_data.add_field('models', 'nudity-2.1,weapon,gore-2.0')
+            
+            # Add the image file
             buffer = BytesIO()
             image.save(buffer, format="PNG")
             buffer.seek(0)
+            form_data.add_field('media', buffer, filename='image.png', content_type='image/png')
 
-            params = {
-                'models': 'nudity-2.1,weapon,gore-2.0',
-                'api_user': api_user,
-                'api_secret': api_secret
-            }
-            files = {'media': ('image.png', buffer)}
-
-            async with session.post('https://api.sightengine.com/1.0/check.json', data=params, files=files) as response:
+            async with session.post('https://api.sightengine.com/1.0/check.json', data=form_data) as response:
                 output = await response.json()
 
             if output.get("status") != "success":
@@ -154,8 +155,6 @@ async def process_image(session, item, bad_indices, api_keys):
             print(f"❌ Error processing image {item['index']}: {e}")
             bad_indices.append(item["index"])
             return None
-
-
 # async def send_to_api_async(nsfw_candidates, bad_indices):
 #     final_nsfw = []
 #     api_user = os.getenv("SIGHTENGINE_USER", "421618219")
