@@ -38,7 +38,7 @@ prompt = """Analyze the following text to detect harmful content. Each content s
 ### Task:
 1. Identify harmful content based on the predefined categories below.
 2. Return only the **identifiers (FP~x)** of the sections containing harmful content, separated by commas.
-3. If no harmful content is found, return an empty string ("").
+3. If no harmful content is found, return an empty string.
 
 ### Harmful Content Categories:
 1. **Hate Speech & Cyberbullying** Content that includes racist, sexist, homophobic, religiously offensive, or derogatory remarks targeting individuals or groups. This covers threats, insults, bullying, harassment, and personal attacks intended to cause harm or incite hatred.
