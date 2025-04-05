@@ -155,7 +155,47 @@ async def process_image(session, item, bad_indices, api_keys):
             print(f"❌ Error processing image {item['index']}: {e}")
             bad_indices.append(item["index"])
             return None
-# async def send_to_api_async(nsfw_candidates, bad_indices):
+
+
+async def send_to_api_async(nsfw_candidates, bad_indices, api_keys):
+    """Process multiple images concurrently using SightEngine API"""
+    async with aiohttp.ClientSession() as session:
+        tasks = [process_image(session, item, bad_indices, api_keys) for item in nsfw_candidates]
+        results = await asyncio.gather(*tasks)
+
+    return [index for index in results if index is not None]  # Filter out None results# ✅ Flask Route
+# @app.route("/analyze-images", methods=['POST'])
+def verify_images():
+    print('hellllo')
+    data = request.json
+    data=data['images']
+    print(data)
+    if not data or not isinstance(data, list):
+        return jsonify({"error": "Invalid input format"}), 400
+
+    bad_indices = []
+    nsfw_candidates = batch_nsfw_prediction(data, bad_indices)
+    final_nsfw = asyncio.run(send_to_api_async(nsfw_candidates, bad_indices,api_keys))
+
+    return jsonify({
+        "nsfw_indices": final_nsfw,
+        "bad_indices": bad_indices
+    })
+    
+
+# if __name__ == "__main__":
+#     print('SERVER STARTED')
+#     app.run(host="0.0.0.0", debug=True)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    # async def send_to_api_async(nsfw_candidates, bad_indices):
 #     final_nsfw = []
 #     api_user = os.getenv("SIGHTENGINE_USER", "421618219")
 #     api_secret = os.getenv("SIGHTENGINE_SECRET", "6evSU9RSa8jCKNCBgVFpxaLy7g2gkCke")
@@ -195,32 +235,3 @@ async def process_image(session, item, bad_indices, api_keys):
 #             bad_indices.append(item["index"])
 
 #     return final_nsfw
-
-async def send_to_api_async(nsfw_candidates, bad_indices, api_keys):
-    """Process multiple images concurrently using SightEngine API"""
-    async with aiohttp.ClientSession() as session:
-        tasks = [process_image(session, item, bad_indices, api_keys) for item in nsfw_candidates]
-        results = await asyncio.gather(*tasks)
-
-    return [index for index in results if index is not None]  # Filter out None results# ✅ Flask Route
-@app.route("/analyze-images", methods=['POST'])
-def verify_images():
-    print('hellllo')
-    data = request.json
-    data=data['images']
-    print(data)
-    if not data or not isinstance(data, list):
-        return jsonify({"error": "Invalid input format"}), 400
-
-    bad_indices = []
-    nsfw_candidates = batch_nsfw_prediction(data, bad_indices)
-    final_nsfw = asyncio.run(send_to_api_async(nsfw_candidates, bad_indices,api_keys))
-
-    return jsonify({
-        "nsfw_indices": final_nsfw,
-        "bad_indices": bad_indices
-    })
-
-if __name__ == "__main__":
-    print('SERVER STARTED')
-    app.run(host="0.0.0.0", debug=True)

@@ -22,7 +22,7 @@ import numpy as np
 import cv2
 from io import BytesIO
 import concurrent.futures
-
+from main import verify_images  # Import the function
 app = Flask(__name__)
 
 CORS(app) 
@@ -181,85 +181,100 @@ def handleScams():
         return jsonify({"success": False, "message": f"Internal Server Error: {str(e)}"}), 500
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #********************Route for NSFW image detection********************
-
 # ✅ NSFW Classifier using Transformers
-classifier = pipeline("image-classification", model="Falconsai/nsfw_image_detection", use_fast=True)
+# classifier = pipeline("image-classification", model="Falconsai/nsfw_image_detection", use_fast=True)
 
-# ✅ Load MobileNetV2 Model
-model = models.mobilenet_v2(pretrained=True)
-model.eval()
+# # ✅ Load MobileNetV2 Model
+# model = models.mobilenet_v2(pretrained=True)
+# model.eval()
 
-# ✅ Image Transformations
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
+# # ✅ Image Transformations
+# transform = transforms.Compose([
+#     transforms.Resize((224, 224)),
+#     transforms.ToTensor(),
+#     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+# ])
 
 # ✅ Attempt to fetch or extract image from webpage
-def fetch_image_from_url(url):
-    try:
-        response = requests.get(url, timeout=10)
-        content_type = response.headers.get("Content-Type", "")
-        if 'image' in content_type:
-            return Image.open(BytesIO(response.content)).convert("RGB")
-        else:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            img_tag = soup.find("img")
-            if img_tag and img_tag.get("src"):
-                img_url = img_tag["src"]
-                if not img_url.startswith("http"):
-                    from urllib.parse import urljoin
-                    img_url = urljoin(url, img_url)
-                img_response = requests.get(img_url, timeout=10)
-                return Image.open(BytesIO(img_response.content)).convert("RGB")
-    except Exception as e:
-        print(f"❌ Failed to fetch image from {url}: {e}")
-    return None
+# def fetch_image_from_url(url):
+#     try:
+#         response = requests.get(url, timeout=10)
+#         content_type = response.headers.get("Content-Type", "")
+#         if 'image' in content_type:
+#             return Image.open(BytesIO(response.content)).convert("RGB")
+#         else:
+#             soup = BeautifulSoup(response.text, 'html.parser')
+#             img_tag = soup.find("img")
+#             if img_tag and img_tag.get("src"):
+#                 img_url = img_tag["src"]
+#                 if not img_url.startswith("http"):
+#                     from urllib.parse import urljoin
+#                     img_url = urljoin(url, img_url)
+#                 img_response = requests.get(img_url, timeout=10)
+#                 return Image.open(BytesIO(img_response.content)).convert("RGB")
+#     except Exception as e:
+#         print(f"❌ Failed to fetch image from {url}: {e}")
+#     return None
 
-# ✅ Load and transform image
-def load_image(image_source):
-    try:
-        if image_source["url"].startswith("http"):
-            image = fetch_image_from_url(image_source["url"])
-        else:
-            image = Image.open(image_source["url"]).convert("RGB")
+# # ✅ Load and transform image
+# def load_image(image_source):
+#     try:
+#         if image_source["url"].startswith("http"):
+#             image = fetch_image_from_url(image_source["url"])
+#         else:
+#             image = Image.open(image_source["url"]).convert("RGB")
 
-        if image:
-            return image_source["index"], transform(image)
-    except Exception as e:
-        print(f"Error loading image {image_source['url']}: {e}")
-    return None
+#         if image:
+#             return image_source["index"], transform(image)
+#     except Exception as e:
+#         print(f"Error loading image {image_source['url']}: {e}")
+#     return None
 
-# ✅ Pre-filter NSFW using Transformer
-def batch_nsfw_prediction(image_sources, bad_indices):
-    nsfw_indices = []
-    nsfw_candidates = []
+# # ✅ Pre-filter NSFW using Transformer
+# def batch_nsfw_prediction(image_sources, bad_indices):
+#     nsfw_indices = []
+#     nsfw_candidates = []
 
-    for img in image_sources:
-        image_data = load_image(img)
-        if image_data is None:
-            bad_indices.append(img["index"])
-            continue
+#     for img in image_sources:
+#         image_data = load_image(img)
+#         if image_data is None:
+#             bad_indices.append(img["index"])
+#             continue
 
-        index, tensor = image_data
-        image_pil = transforms.ToPILImage()(tensor)
-        try:
-            response = classifier(image_pil)
-            nsfw_score = response[0]["score"] if response else 0
-            print(f"Image {index} -> NSFW Score: {nsfw_score}")
+#         index, tensor = image_data
+#         image_pil = transforms.ToPILImage()(tensor)
+#         try:
+#             response = classifier(image_pil)
+#             nsfw_score = response[0]["score"] if response else 0
+#             print(f"Image {index} -> NSFW Score: {nsfw_score}")
 
-            if nsfw_score > 0.5:
-                nsfw_candidates.append({"url": img["url"], "index": index})
-        except Exception as e:
-            print(f"❌ NSFW classifier failed for {img['url']}: {e}")
-            bad_indices.append(img["index"])
+#             if nsfw_score > 0.5:
+#                 nsfw_candidates.append({"url": img["url"], "index": index})
+#         except Exception as e:
+#             print(f"❌ NSFW classifier failed for {img['url']}: {e}")
+#             bad_indices.append(img["index"])
 
-    return nsfw_candidates
+#     return nsfw_candidates
 
-# ✅ Final filtering via Sightengine
-async def send_to_api_async(nsfw_candidates, bad_indices):
+# # ✅ Final filtering via Sightengine
+# async def send_to_api_async(nsfw_candidates, bad_indices):
     final_nsfw = []
     api_user = os.getenv("SIGHTENGINE_USER", "421618219")
     api_secret = os.getenv("SIGHTENGINE_SECRET", "6evSU9RSa8jCKNCBgVFpxaLy7g2gkCke")
@@ -298,22 +313,23 @@ async def send_to_api_async(nsfw_candidates, bad_indices):
     return final_nsfw
 
 # ✅ Flask Route
-@app.route("/verify-images", methods=['POST'])
-def verify_images():
-    data = request.json
-    if not data or not isinstance(data, list):
-        return jsonify({"error": "Invalid input format"}), 400
+@app.route("/analyze-images", methods=['POST'])
+def analyze_images():
+    return verify_images()  # Call the imported function inside another function
 
-    bad_indices = []
-    nsfw_candidates = batch_nsfw_prediction(data, bad_indices)
-    final_nsfw = asyncio.run(send_to_api_async(nsfw_candidates, bad_indices))
+# def verify_images():
+#     data = request.json
+#     if not data or not isinstance(data, list):
+#         return jsonify({"error": "Invalid input format"}), 400
 
-    return jsonify({
-        "nsfw_indices": final_nsfw,
-        "bad_indices": bad_indices
-    })
+#     bad_indices = []
+#     nsfw_candidates = batch_nsfw_prediction(data, bad_indices)
+#     final_nsfw = asyncio.run(send_to_api_async(nsfw_candidates, bad_indices))
 
-       
+#     return jsonify({
+#         "nsfw_indices": final_nsfw,
+#         "bad_indices": bad_indices
+#     })       
 if __name__ == "__main__":
     app.run(host="0.0.0.0",threaded=False,debug=True)
 
