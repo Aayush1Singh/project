@@ -1,39 +1,31 @@
 const API_URL = "https://random-server-b310.onrender.com";
-
 window.addEventListener("load", async () => {
-  // console.log("hello");
   try {
     chrome.storage.local.get("detectionEnabled", async (result) => {
-      // console.log(result);
       if (result.detectionEnabled) {
-        // console.log("hello2");
         analyzeContent();
         analyzeRoute();
+        analyzeImages();
         observeDynamicContent();
       }
     });
-    // console.log("lolo");
-  } catch (err) {
-    // console.log(err);
-  }
+  } catch (err) {}
 });
 /**
+ * LOCALHOST SERVER
  *http://127.0.0.1:500
  *
- *
-https://random-server-b310.onrender.com
+ *HOSTED SERVER
+ *https://random-server-b310.onrender.com
  */
-// Detect harmful content only if detection is enabled
-// chrome.storage.local.get("detectionEnabled", (result) => {
-//   if (result.detectionEnabled) {
-//     analyzeContent();
-//   }
-// });
 
 // Listen for toggle action from popup
 chrome.runtime.onMessage.addListener((message) => {
   if (message.action === "ENABLE_DETECTION") {
     analyzeContent();
+    analyzeRoute();
+    analyzeImages();
+    observeDynamicContent();
   } else if (message.action === "DISABLE_DETECTION") {
     console.log("Detection disabled");
   }
@@ -93,44 +85,17 @@ async function extractPageContent() {
   // assigning a unique id to each tag
   var y = 0;
   elements.forEach((el, index) => {
-    // const clonedEl = document.createElement(el.tagName.toLowerCase());
     el.setAttribute("data-original-id", `${index}`);
     el.classList.add(`data-original-id${index}`);
     y++;
-    // if (el.innerText.length > 2000) {
-    //   const text = el.innerText;
-    //   const chunkSize = Math.ceil(text.length / Math.ceil(text.length / 1000));
-    //   console.log(text);
-    //   el.innerHTML = "";
-    //   for (let i = 0; i < text.length; i += chunkSize) {
-    //     const span = document.createElement("span");
-    //     span.innerText = text.slice(i, i + chunkSize);
-    //     span.style.display = "inline";
-    //     span.style.margin = "1em 0";
-    //     span.setAttribute("data-original-id", `${y}`);
-    //     span.classList.add(`data-original-id${y}`);
-    //     y++;
-    //     el.appendChild(span);
-    //   }
-    // }
-    // const clonedEl = el.cloneNode(true);
-    // articleWrapper.appendChild(clonedEl);
   });
 
   await chrome.storage.local.set({ lastIndex: y });
-  //clonning document
-  // console.log(document);
-  // console.log(documentClone);
-  // Serialize the entire document to an HTML string
   const htmlString = document.documentElement.outerHTML;
 
   // Use DOMParser to convert the HTML string back into a Document
   const parser = new DOMParser();
   const documentClone = parser.parseFromString(htmlString, "text/html"); // const parser2 = new DOMParser();
-  // const documentClone = parser2.parseFromString(
-  //   document.documentElement.outerHTML,
-  //   "text/html"
-  // );
 
   // //attaching a finger print to each paragraph.
   documentClone
@@ -141,31 +106,25 @@ async function extractPageContent() {
       if (el.innerText == " " || el.innerText == "") return;
       el.innerText += ` \u2063#FP~${originalId}\u2063 `;
     });
-  // console.log(documentClone);
   //flattening the website
   const flattenedDOM = flattenContent(documentClone.body);
-  // console.log(flattenedDOM);
   const newDoc =
     document.implementation.createHTMLDocument("Flattened Content");
   newDoc.body.innerHTML = flattenedDOM.innerHTML;
   //parsing the document
-  // console.log(documentClone.documentElement.outerHTML);
   const article = new Readability(documentClone).parse();
   // const parser = new DOMParser();
-  // console.log(article, article.content);
   const parsedDocument = parser.parseFromString(article.content, "text/html");
   // Extract all text content
   var allTextContent = parsedDocument.body.innerText.trim();
-  // console.log(allTextContent);
   //trimming down if any unwanted spaces.
-  // console.log(allTextContent);
   allTextContent = allTextContent.replace(/\s+/g, " ");
   return {
     text: allTextContent,
   };
 }
+
 async function analyzeContent() {
-  // console.log("you know");
   const { text } = await extractPageContent();
   const url = window.location.href;
 
@@ -174,9 +133,7 @@ async function analyzeContent() {
   const cachedData = await chrome.storage.local.get(storageKey);
 
   if (cachedData[storageKey]) {
-    // console.log("Using cached data...");
     highlightHarmfulContent(cachedData[storageKey]);
-    // console.log("exiting from it due to storage");
     return;
   }
   const response = await fetch(`${API_URL}/analyze-content`, {
@@ -194,16 +151,15 @@ async function analyzeContent() {
     harmfulDetected: 0,
   };
   currentStats.totalScanned = currentStats.totalScanned + 1;
-  // console.log(currentStats);
   await chrome.storage.local.set({ stats: currentStats });
 
   highlightHarmfulContent(output.split(","));
 }
+
 async function analyzeRoute() {
   const currentHost = window.location.hostname;
   // Get all anchor (`a`) tags
   const links = document.querySelectorAll("a");
-  // console.log("hello5");
   // Extract only external links
   const externalLinks = [...links]
     .map((link, index) => {
@@ -218,7 +174,6 @@ async function analyzeRoute() {
         return false; // Ignore invalid URLs
       }
     });
-  // console.log(externalLinks);
   const response = await fetch(`${API_URL}/scamphishing`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -290,21 +245,22 @@ async function highlightHarmfulContent(harmfulSections) {
     const element = document.querySelector(`.data-original-id${id.slice(3)}`);
     if (element) {
       element.style.position = "relative";
-      element.style.color = "transparent"; // Hide text
+      // element.style.color = "rgba(255, 0, 0, 0.8)"; // Hide text
+      element.style.setProperty("color", "transparent", "important");
       element.style.backgroundColor = "rgba(255, 0, 0, 0.8)"; // Red overlay
       element.style.backdropFilter = "blur(8px)"; // Modern blur effect
       element.style.borderRadius = "8px"; // Soft rounded corners
       element.style.padding = "2px 5px"; // Clean spacing
       element.style.cursor = "not-allowed"; // Indicate restricted content
-      element.addEventListener("mouseover", () => {
-        element.style.color = "white"; // Text appears
-        element.style.backgroundColor = "rgba(255, 0, 0, 0.9)";
-      });
+      // element.addEventListener("mouseover", () => {
+      //   element.style.color = "white"; // Text appears
+      //   element.style.backgroundColor = "rgba(255, 0, 0, 0.9)";
+      // });
 
-      element.addEventListener("mouseout", () => {
-        element.style.color = "transparent"; // Text re-hidden
-        element.style.backgroundColor = "rgba(255, 0, 0, 0.8)";
-      });
+      // element.addEventListener("mouseout", () => {
+      //   element.style.color = "transparent"; // Text re-hidden
+      //   element.style.backgroundColor = "rgba(255, 0, 0, 0.8)";
+      // });
     }
   });
 }
@@ -326,7 +282,6 @@ async function analyzeContentMutation(text) {
 //for observing changes in webpage and
 async function observeDynamicContent() {
   var { lastIndex: index } = (await chrome.storage.local.get("lastIndex")) || 0;
-  // console.log(index);
   const observer = new MutationObserver(async (mutations) => {
     const newElements = [];
     var externalLinks = [];
@@ -359,7 +314,6 @@ async function observeDynamicContent() {
           });
           const container = document.createElement("div");
           elements.forEach((el) => {
-            // console.log(el);
             container.appendChild(el.cloneNode(true));
           });
 
@@ -368,7 +322,6 @@ async function observeDynamicContent() {
           const currentHost = window.location.hostname;
           // Get all anchor (`a`) tags
           const links = node.querySelectorAll("a");
-          // console.log("hello5");
           // Extract only external links
           externalLinks = [...links]
             .map((link) => {
@@ -385,7 +338,6 @@ async function observeDynamicContent() {
               }
             });
           const images = node.querySelectorAll("img");
-          // console.log(images);
           imageData = [
             ...imageData,
             ...[...images].map((img) => {
@@ -395,7 +347,6 @@ async function observeDynamicContent() {
               return { url: img.src, index };
             }),
           ];
-          console.log(imageData);
         });
       });
 
@@ -416,15 +367,12 @@ async function observeDynamicContent() {
       );
       var allTextContent = parsedDocument.body.innerText.trim();
       allTextContent = allTextContent.replace(/\s+/g, " ");
-      // console.log(allTextContent);
 
       analyzeContentMutation(allTextContent);
 
       analyzeLinksMutation(externalLinks);
 
-      console.log("Scanning images for explicit content...");
       // Extract image URLs and assign unique class names
-      console.log(imageData);
       analyzeImagesMutation(imageData);
       chrome.storage.local.set({ lastIndex: index });
       // await chrome.storage.local.set({ lastIndex: index });
@@ -442,7 +390,6 @@ async function analyzeImages() {
   var { lastIndex: index } = (await chrome.storage.local.get("lastIndex")) || 0;
   const images = document.querySelectorAll("img");
 
-  console.log("Scanning images for explicit content...");
   // Extract image URLs and assign unique class names
   const imageData = [...images].map((img) => {
     index++;
@@ -450,6 +397,7 @@ async function analyzeImages() {
     // Unique class for reference
     return { url: img.src, index };
   });
+
   await chrome.storage.local.set({ lastIndex: index });
   // Send image URLs to backend
   try {
@@ -468,14 +416,13 @@ async function analyzeImages() {
         filter: blur(10px); /* Blur effect */
         transition: filter 0.3s ease-in-out;
       }
-      .explicit-image:hover {
-        filter: none; /* Allow users to view on hover if needed */
-      }
+      // .explicit-image:hover {
+      //   filter: none; /* Allow users to view on hover if needed */
+      // }
     `;
     document.head.appendChild(style);
-
     // Apply blur to flagged images
-    flaggedImages.indices.forEach((index) => {
+    flaggedImages["nsfw_indices"].forEach((index) => {
       const img = document.querySelector(`.image-${index}`);
       if (img) img.classList.add("explicit-image");
     });
@@ -507,7 +454,7 @@ async function analyzeImagesMutation(imageData) {
     document.head.appendChild(style);
 
     // Apply blur to flagged images
-    flaggedImages.indices.forEach((index) => {
+    flaggedImages["nsfw_indices"].forEach((index) => {
       const img = document.querySelector(`.image-${index}`);
       if (img) img.classList.add("explicit-image");
     });
