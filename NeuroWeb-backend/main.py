@@ -18,7 +18,7 @@ import aiohttp
 app = Flask(__name__)
 CORS(app)
 load_dotenv()
-api_keys=[['1861897728','dVZMNttNhrjSrCGVTSdFfGAA3Kw8N9LB'],["421618219","6evSU9RSa8jCKNCBgVFpxaLy7g2gkCke"],['720767819','CcNxxJdRSimKuQ4RwZsNiDnMxKHWmxJr'],['1157867926','bZDXeHTEdMBfAfeaP5i4xijfHFPCyM9y']]
+api_keys=os.getenv("APIKEYS")
 
 classifier = pipeline("image-classification", model="Falconsai/nsfw_image_detection", use_fast=True)
 
